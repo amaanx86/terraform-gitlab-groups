@@ -1,5 +1,17 @@
 # GITLAB GROUP RESOURCE
 # =====================
+
+# LOCAL VARIABLES FOR MEMBERSHIP MANAGEMENT
+# ==========================================
+locals {
+  # Convert simple user ID lists to sets for efficient management
+  owner_set      = toset([for id in var.owners : tostring(id)])
+  maintainer_set = toset([for id in var.maintainers : tostring(id)])
+  developer_set  = toset([for id in var.developers : tostring(id)])
+  reporter_set   = toset([for id in var.reporters : tostring(id)])
+  guest_set      = toset([for id in var.guests : tostring(id)])
+}
+
 resource "gitlab_group" "this" {
   # REQUIRED ATTRIBUTES
   # ==================
@@ -118,7 +130,7 @@ resource "gitlab_group_membership" "custom_members" {
 
 # Owner members
 resource "gitlab_group_membership" "owners" {
-  for_each = toset([for id in var.owners : tostring(id)])
+  for_each = local.owner_set
 
   group_id     = gitlab_group.this.id
   user_id      = tonumber(each.value)
@@ -127,7 +139,7 @@ resource "gitlab_group_membership" "owners" {
 
 # Maintainer members
 resource "gitlab_group_membership" "maintainers" {
-  for_each = toset([for id in var.maintainers : tostring(id)])
+  for_each = local.maintainer_set
 
   group_id     = gitlab_group.this.id
   user_id      = tonumber(each.value)
@@ -136,7 +148,7 @@ resource "gitlab_group_membership" "maintainers" {
 
 # Developer members
 resource "gitlab_group_membership" "developers" {
-  for_each = toset([for id in var.developers : tostring(id)])
+  for_each = local.developer_set
 
   group_id     = gitlab_group.this.id
   user_id      = tonumber(each.value)
@@ -145,7 +157,7 @@ resource "gitlab_group_membership" "developers" {
 
 # Reporter members
 resource "gitlab_group_membership" "reporters" {
-  for_each = toset([for id in var.reporters : tostring(id)])
+  for_each = local.reporter_set
 
   group_id     = gitlab_group.this.id
   user_id      = tonumber(each.value)
@@ -154,7 +166,7 @@ resource "gitlab_group_membership" "reporters" {
 
 # Guest members
 resource "gitlab_group_membership" "guests" {
-  for_each = toset([for id in var.guests : tostring(id)])
+  for_each = local.guest_set
 
   group_id     = gitlab_group.this.id
   user_id      = tonumber(each.value)
