@@ -263,3 +263,66 @@ output "group_url_slug" {
   description = "The URL slug for the group (same as path, provided for clarity)."
   value       = gitlab_group.this.path
 }
+
+# GROUP MEMBERSHIP INFORMATION
+# ============================
+
+output "members" {
+  description = "All group members with their access levels."
+  value = merge(
+    { for k, v in gitlab_group_membership.custom_members : k => {
+      user_id      = v.user_id
+      access_level = v.access_level
+      expires_at   = v.expires_at
+    } },
+    { for k, v in gitlab_group_membership.owners : "owner_${k}" => {
+      user_id      = v.user_id
+      access_level = v.access_level
+      expires_at   = null
+    } },
+    { for k, v in gitlab_group_membership.maintainers : "maintainer_${k}" => {
+      user_id      = v.user_id
+      access_level = v.access_level
+      expires_at   = null
+    } },
+    { for k, v in gitlab_group_membership.developers : "developer_${k}" => {
+      user_id      = v.user_id
+      access_level = v.access_level
+      expires_at   = null
+    } },
+    { for k, v in gitlab_group_membership.reporters : "reporter_${k}" => {
+      user_id      = v.user_id
+      access_level = v.access_level
+      expires_at   = null
+    } },
+    { for k, v in gitlab_group_membership.guests : "guest_${k}" => {
+      user_id      = v.user_id
+      access_level = v.access_level
+      expires_at   = null
+    } }
+  )
+}
+
+output "member_count" {
+  description = "Total number of members added to the group."
+  value = (
+    length(gitlab_group_membership.custom_members) +
+    length(gitlab_group_membership.owners) +
+    length(gitlab_group_membership.maintainers) +
+    length(gitlab_group_membership.developers) +
+    length(gitlab_group_membership.reporters) +
+    length(gitlab_group_membership.guests)
+  )
+}
+
+output "member_ids" {
+  description = "List of all user IDs that are members of the group."
+  value = distinct(concat(
+    [for m in gitlab_group_membership.custom_members : m.user_id],
+    [for m in gitlab_group_membership.owners : m.user_id],
+    [for m in gitlab_group_membership.maintainers : m.user_id],
+    [for m in gitlab_group_membership.developers : m.user_id],
+    [for m in gitlab_group_membership.reporters : m.user_id],
+    [for m in gitlab_group_membership.guests : m.user_id]
+  ))
+}

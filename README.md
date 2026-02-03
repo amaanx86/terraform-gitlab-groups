@@ -7,6 +7,7 @@ A comprehensive Terraform module for creating and managing GitLab groups with fu
 ## Features
 
 - **Complete GitLab Group Management** - Full support for all `gitlab_group` resource features
+- **Group Membership Management** - Add users to groups with different access levels (owner, maintainer, developer, reporter, guest)
 - **Advanced Security Settings** - Two-factor authentication, IP restrictions, and push rules
 - **Access Control** - Granular permissions for project/subgroup creation and membership
 - **CI/CD Integration** - Shared runners configuration and minutes management
@@ -27,6 +28,62 @@ module "basic_group" {
   name        = "development-team"
   path        = "dev-team"
   description = "Development team group"
+}
+```
+
+### Group with Members
+
+```hcl
+module "team_group" {
+  source  = "sudo-terraform-modules/groups/gitlab"
+  version = "0.2.0"
+
+  name        = "backend-team"
+  path        = "backend-team"
+  description = "Backend development team"
+  
+  # Add team members with different access levels
+  owners      = [101, 102]           # User IDs for group owners
+  maintainers = [201, 202, 203]      # User IDs for maintainers
+  developers  = [301, 302, 303, 304] # User IDs for developers
+  reporters   = [401]                # User IDs for reporters
+  guests      = [501, 502]           # User IDs for guests
+}
+```
+
+### Advanced Member Management
+
+```hcl
+module "project_group" {
+  source  = "sudo-terraform-modules/groups/gitlab"
+  version = "0.2.0"
+
+  name        = "project-alpha"
+  path        = "project-alpha"
+  description = "Project Alpha team"
+  
+  # Simple member lists
+  owners     = [100]
+  developers = [200, 201, 202]
+  
+  # Advanced member configuration with expiration dates
+  members = {
+    contractor_1 = {
+      user_id      = 300
+      access_level = "developer"
+      expires_at   = "2024-12-31"
+    }
+    contractor_2 = {
+      user_id      = 301
+      access_level = "developer"
+      expires_at   = "2024-12-31"
+    }
+    external_auditor = {
+      user_id      = 400
+      access_level = "reporter"
+      expires_at   = "2024-06-30"
+    }
+  }
 }
 ```
 
@@ -157,6 +214,12 @@ module "cicd_group" {
 | parent_id | The ID of the parent group (creates nested group) | `number` | `null` |
 | project_creation_level | Who can create projects (noone, owner, maintainer, developer, administrator) | `string` | `"maintainer"` |
 | subgroup_creation_level | Who can create subgroups (owner, maintainer) | `string` | `"owner"` |
+| owners | List of user IDs to add as owners | `list(number)` | `[]` |
+| maintainers | List of user IDs to add as maintainers | `list(number)` | `[]` |
+| developers | List of user IDs to add as developers | `list(number)` | `[]` |
+| reporters | List of user IDs to add as reporters | `list(number)` | `[]` |
+| guests | List of user IDs to add as guests | `list(number)` | `[]` |
+| members | Map of users with custom access levels and optional expiration dates | `map(object)` | `{}` |
 | require_two_factor_authentication | Require 2FA for all group members | `bool` | `false` |
 | two_factor_grace_period | 2FA enforcement grace period (hours) | `number` | `48` |
 | lfs_enabled | Enable Large File Storage for projects | `bool` | `true` |
@@ -169,6 +232,7 @@ module "cicd_group" {
 
 For a complete list of all input variables, see the [variables.tf](./variables.tf) file. The module supports all GitLab group features including:
 
+- **Membership Management**: owners, maintainers, developers, reporters, guests, members (with expiration)
 - **Access Control**: membership_lock, share_with_group_lock, prevent_forking_outside_group
 - **Features**: auto_devops_enabled, wiki_access_level, emails_enabled, mentions_disabled
 - **CI/CD**: shared_runners_minutes_limit, extra_shared_runners_minutes_limit
@@ -201,6 +265,14 @@ For a complete list of all input variables, see the [variables.tf](./variables.t
 | security_settings | Security configuration |
 | cicd_settings | CI/CD and shared runners configuration |
 | feature_settings | Feature and integration settings |
+
+### Membership Outputs
+
+| Name | Description |
+|------|-------------|
+| members | All group members with their access levels |
+| member_count | Total number of members added to the group |
+| member_ids | List of all user IDs that are members of the group |
 
 ### Convenience Outputs
 
