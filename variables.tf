@@ -300,6 +300,98 @@ variable "push_rules" {
   }
 }
 
+# GROUP MEMBERSHIP CONFIGURATION
+# ===============================
+
+variable "members" {
+  description = "Map of users to add to the group with their access levels. Keys can be any unique identifier, values are objects with user_id and access_level."
+  type = map(object({
+    user_id      = number
+    access_level = string
+    expires_at   = optional(string)
+  }))
+  default = {}
+
+  validation {
+    condition = alltrue([
+      for member in var.members : contains(
+        ["no one", "minimal", "guest", "reporter", "developer", "maintainer", "owner"],
+        member.access_level
+      )
+    ])
+    error_message = "Access level must be one of: no one, minimal, guest, reporter, developer, maintainer, owner."
+  }
+
+  validation {
+    condition = alltrue([
+      for member in var.members : member.user_id > 0
+    ])
+    error_message = "User ID must be a positive integer."
+  }
+
+  validation {
+    condition = alltrue([
+      for member in var.members : member.expires_at == null || can(regex("^\\d{4}-\\d{2}-\\d{2}$", member.expires_at))
+    ])
+    error_message = "Expiration date must be in YYYY-MM-DD format if specified."
+  }
+}
+
+variable "owners" {
+  description = "List of user IDs to add as owners of the group."
+  type        = list(number)
+  default     = []
+
+  validation {
+    condition     = alltrue([for id in var.owners : id > 0])
+    error_message = "All user IDs must be positive integers."
+  }
+}
+
+variable "maintainers" {
+  description = "List of user IDs to add as maintainers of the group."
+  type        = list(number)
+  default     = []
+
+  validation {
+    condition     = alltrue([for id in var.maintainers : id > 0])
+    error_message = "All user IDs must be positive integers."
+  }
+}
+
+variable "developers" {
+  description = "List of user IDs to add as developers of the group."
+  type        = list(number)
+  default     = []
+
+  validation {
+    condition     = alltrue([for id in var.developers : id > 0])
+    error_message = "All user IDs must be positive integers."
+  }
+}
+
+variable "reporters" {
+  description = "List of user IDs to add as reporters of the group."
+  type        = list(number)
+  default     = []
+
+  validation {
+    condition     = alltrue([for id in var.reporters : id > 0])
+    error_message = "All user IDs must be positive integers."
+  }
+}
+
+variable "guests" {
+  description = "List of user IDs to add as guests of the group."
+  type        = list(number)
+  default     = []
+
+  validation {
+    condition     = alltrue([for id in var.guests : id > 0])
+    error_message = "All user IDs must be positive integers."
+  }
+}
+
 # ==============================================================================
 # VARIABLE GROUPS SUMMARY
 # ==============================================================================
@@ -318,6 +410,10 @@ variable "push_rules" {
 # - membership_lock, share_with_group_lock
 # - request_access_enabled, prevent_forking_outside_group
 # - project_creation_level, subgroup_creation_level
+#
+# MEMBERSHIP VARIABLES:
+# - members: Map of users with custom access levels and expiration dates
+# - owners, maintainers, developers, reporters, guests: Simplified user ID lists
 #
 # OPERATIONAL VARIABLES:
 # - shared_runners_setting, shared_runners_minutes_limit

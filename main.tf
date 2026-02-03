@@ -1,5 +1,17 @@
 # GITLAB GROUP RESOURCE
 # =====================
+
+# LOCAL VARIABLES FOR MEMBERSHIP MANAGEMENT
+# ==========================================
+locals {
+  # Convert simple user ID lists to sets for efficient management
+  owner_set      = toset([for id in var.owners : tostring(id)])
+  maintainer_set = toset([for id in var.maintainers : tostring(id)])
+  developer_set  = toset([for id in var.developers : tostring(id)])
+  reporter_set   = toset([for id in var.reporters : tostring(id)])
+  guest_set      = toset([for id in var.guests : tostring(id)])
+}
+
 resource "gitlab_group" "this" {
   # REQUIRED ATTRIBUTES
   # ==================
@@ -101,4 +113,62 @@ resource "gitlab_group" "this" {
       reject_unsigned_commits       = push_rules.value.reject_unsigned_commits
     }
   }
+}
+
+# GITLAB GROUP MEMBERSHIP RESOURCES
+# ==================================
+
+# Custom members with flexible configuration (supports expiration dates)
+resource "gitlab_group_membership" "custom_members" {
+  for_each = var.members
+
+  group_id     = gitlab_group.this.id
+  user_id      = each.value.user_id
+  access_level = each.value.access_level
+  expires_at   = each.value.expires_at
+}
+
+# Owner members
+resource "gitlab_group_membership" "owners" {
+  for_each = local.owner_set
+
+  group_id     = gitlab_group.this.id
+  user_id      = tonumber(each.value)
+  access_level = "owner"
+}
+
+# Maintainer members
+resource "gitlab_group_membership" "maintainers" {
+  for_each = local.maintainer_set
+
+  group_id     = gitlab_group.this.id
+  user_id      = tonumber(each.value)
+  access_level = "maintainer"
+}
+
+# Developer members
+resource "gitlab_group_membership" "developers" {
+  for_each = local.developer_set
+
+  group_id     = gitlab_group.this.id
+  user_id      = tonumber(each.value)
+  access_level = "developer"
+}
+
+# Reporter members
+resource "gitlab_group_membership" "reporters" {
+  for_each = local.reporter_set
+
+  group_id     = gitlab_group.this.id
+  user_id      = tonumber(each.value)
+  access_level = "reporter"
+}
+
+# Guest members
+resource "gitlab_group_membership" "guests" {
+  for_each = local.guest_set
+
+  group_id     = gitlab_group.this.id
+  user_id      = tonumber(each.value)
+  access_level = "guest"
 }
