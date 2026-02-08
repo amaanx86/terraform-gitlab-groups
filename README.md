@@ -425,7 +425,7 @@ See [CHANGELOG.md](./CHANGELOG.md) for version history and changes.
 
 ## Maintainer
 
-This module is maintained by [Amaan Ul Haq Siddiqui](https://github.com/amaan-igs).
+This module is maintained by [Amaan Ul Haq Siddiqui](https://github.com/amaanx86) and [Hameedullah Khan](https://github.com/hameedullah).
 
 ---
 
